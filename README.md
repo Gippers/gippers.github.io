@@ -34,3 +34,9 @@ import { Button } from "@/components/ui/button"
   </body>
 </html>
 ```
+
+### Adding more components
+
+``` .sh
+npx shadcn@latest add card
+```

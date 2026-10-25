@@ -16,13 +16,28 @@ const { cell = 16, radius = 90 } = Astro.props;
 
 <script>
   const CHARS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ#%&*+=<>/";
-  const HIT_CHANCE = 0.18; // chance a nearby cell lights per pointer sample (higher = denser)
-  const DECAY = 0.965;     // fade-out speed (closer to 1 = lingers longer)
-  const EASE = 0.18;       // fade-in speed (higher = snappier)
-  const SCRAMBLE = 0.015;  // per-frame chance a lit cell flickers to a new character
-  const BASE = 0;          // resting opacity; try 0.04 for a faint always-visible grid
+
+  // Cursor trail
+  const HIT_CHANCE = 0.02;        // chance a nearby cell lights per pointer sample
+  const FADE_IN = 0.08;           // seconds (time constant) to fade in
+  const QUICK_FADE = 1.2;         // seconds for a normal lit cell to fade out
+  const LINGER_CHANCE = 0.12;     // chance a lit cell lingers instead
+  const LINGER_MIN = 5;           // seconds
+  const LINGER_MAX = 30;          // seconds
+  const SCRAMBLE = 0.8;           // flickers per second for quick cells
+  const LINGER_SCRAMBLE = 0.08;   // flickers per second for lingering cells (calmer)
+
+  // Ambient layer (runs without the cursor)
+  const AMBIENT_DENSITY = 0.1;  // fraction of cells mid-fade at any time (sparse)
+  const AMBIENT_MIN = 40;         // seconds per fade in + out cycle
+  const AMBIENT_MAX = 60;
+  const AMBIENT_PEAK_MIN = 0.2;   // max opacity an ambient cell reaches
+  const AMBIENT_PEAK_MAX = 0.5;
+
+  const BASE = 0;                 // resting opacity for every cell; try 0.03 for a faint full grid
 
   const rand = () => CHARS[(Math.random() * CHARS.length) | 0];
+  const between = (a: number, b: number) => a + Math.random() * (b - a);
 
   document.querySelectorAll<HTMLCanvasElement>(".char-grid").forEach((canvas) => {
     const ctx = canvas.getContext("2d")!;
@@ -30,19 +45,47 @@ const { cell = 16, radius = 90 } = Astro.props;
     const CELL = Number(canvas.dataset.cell) || 16;
     const RADIUS = Number(canvas.dataset.radius) || 90;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const base = reduce ? 0.08 : BASE; // reduced motion: static faint grid, no interaction
 
-    let w = 0, h = 0, cols = 0, rows = 0, running = false;
+    let w = 0, h = 0, cols = 0, rows = 0;
     let chars: string[] = [];
-    let heat = new Float32Array(0); // target brightness, set by the cursor, decays
-    let glow = new Float32Array(0); // what's drawn, eases toward heat (the fade-in)
+    let heat = new Float32Array(0);    // trail target brightness, falls linearly
+    let glow = new Float32Array(0);    // trail drawn brightness, eases toward heat
+    let fadeDur = new Float32Array(0); // per-cell fade-out time in seconds
+    let ambT = new Float32Array(0);    // ambient elapsed time, -1 = inactive
+    let ambDur = new Float32Array(0);
+    let ambPeak = new Float32Array(0);
+    let ambActive = 0;
     let dim = "#888", hot = "#888";
-    let last: { x: number; y: number } | null = null;
+    let prevPt: { x: number; y: number } | null = null;
 
     function readColors() {
       const s = getComputedStyle(canvas);
       dim = s.getPropertyValue("--grid-dim").trim() || dim;
       hot = s.getPropertyValue("--grid-hot").trim() || hot;
+    }
+
+    function spawnAmbient(randomPhase: boolean) {
+      for (let tries = 0; tries < 10; tries++) {
+        const i = (Math.random() * ambT.length) | 0;
+        if (ambT[i] >= 0) continue;
+        ambDur[i] = between(AMBIENT_MIN, AMBIENT_MAX);
+        ambPeak[i] = between(AMBIENT_PEAK_MIN, AMBIENT_PEAK_MAX);
+        ambT[i] = randomPhase ? Math.random() * ambDur[i] : 0;
+        if (glow[i] < 0.05) chars[i] = rand();
+        ambActive++;
+        return;
+      }
+    }
+
+    function topUpAmbient(randomPhase: boolean) {
+      const target = Math.round(ambT.length * AMBIENT_DENSITY);
+      for (let guard = 0; ambActive < target && guard < target * 3; guard++) spawnAmbient(randomPhase);
+    }
+
+    function ambient(i: number) {
+      if (ambT[i] < 0) return 0;
+      const s = Math.sin((Math.PI * ambT[i]) / ambDur[i]);
+      return ambPeak[i] * s * s; // smooth in, smooth out
     }
 
     function resize() {
@@ -53,7 +96,14 @@ const { cell = 16, radius = 90 } = Astro.props;
       cols = Math.ceil(w / CELL); rows = Math.ceil(h / CELL);
       const n = cols * rows;
       chars = Array.from({ length: n }, rand);
-      heat = new Float32Array(n); glow = new Float32Array(n);
+      heat = new Float32Array(n);
+      glow = new Float32Array(n);
+      fadeDur = new Float32Array(n).fill(QUICK_FADE);
+      ambT = new Float32Array(n).fill(-1);
+      ambDur = new Float32Array(n);
+      ambPeak = new Float32Array(n);
+      ambActive = 0;
+      topUpAmbient(true); // start mid-cycle so the page is never empty
       readColors();
       draw();
     }
@@ -63,27 +113,33 @@ const { cell = 16, radius = 90 } = Astro.props;
       ctx.font = `${Math.round(CELL * 0.75)}px ui-monospace, "SFMono-Regular", Menlo, monospace`;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       for (let i = 0; i < glow.length; i++) {
-        const g = Math.max(glow[i], base);
+        const g = Math.max(glow[i], ambient(i), BASE);
         if (g < 0.01) continue;
         const x = (i % cols) * CELL + CELL / 2;
         const y = ((i / cols) | 0) * CELL + CELL / 2;
         ctx.globalAlpha = g;     ctx.fillStyle = dim; ctx.fillText(chars[i], x, y);
-        ctx.globalAlpha = g * g; ctx.fillStyle = hot; ctx.fillText(chars[i], x, y); // colour shifts as it brightens
+        ctx.globalAlpha = g * g; ctx.fillStyle = hot; ctx.fillText(chars[i], x, y);
       }
       ctx.globalAlpha = 1;
     }
 
-    function step() {
-      let alive = false;
+    function step(dt: number) {
+      const kIn = 1 - Math.exp(-dt / FADE_IN);
       for (let i = 0; i < heat.length; i++) {
-        if (heat[i] < 0.002 && glow[i] < 0.002) { heat[i] = glow[i] = 0; continue; }
-        heat[i] *= DECAY;
-        glow[i] += (heat[i] - glow[i]) * EASE;
-        if (glow[i] > 0.3 && Math.random() < SCRAMBLE) chars[i] = rand();
-        alive = true;
+        if (ambT[i] >= 0) {
+          ambT[i] += dt;
+          if (ambT[i] >= ambDur[i]) { ambT[i] = -1; ambActive--; }
+        }
+        if (heat[i] > 0 || glow[i] > 0.002) {
+          heat[i] = Math.max(0, heat[i] - dt / fadeDur[i]);
+          glow[i] += (heat[i] - glow[i]) * kIn;
+          if (heat[i] === 0 && glow[i] < 0.002) glow[i] = 0;
+          const rate = fadeDur[i] > QUICK_FADE ? LINGER_SCRAMBLE : SCRAMBLE;
+          if (glow[i] > 0.3 && Math.random() < rate * dt) chars[i] = rand();
+        }
       }
+      topUpAmbient(false);
       draw();
-      if (alive) requestAnimationFrame(step); else running = false; // stops when idle
     }
 
     function hit(px: number, py: number) {
@@ -95,33 +151,55 @@ const { cell = 16, radius = 90 } = Astro.props;
         const d = Math.hypot(c * CELL + CELL / 2 - px, r * CELL + CELL / 2 - py);
         if (d > RADIUS || Math.random() > HIT_CHANCE * (1 - d / RADIUS)) continue;
         const i = r * cols + c;
-        if (heat[i] < 0.25) chars[i] = rand(); // coming back to a faded cell gives a new character
+        if (heat[i] < 0.25) {
+          chars[i] = rand(); // returning to a faded cell gives a new character
+          fadeDur[i] = Math.random() < LINGER_CHANCE ? between(LINGER_MIN, LINGER_MAX) : QUICK_FADE;
+        }
         heat[i] = 1;
       }
     }
+
+    // Animation loop: runs only while the grid is on screen
+    let raf = 0, lastT = 0, visible = false;
+    function frame(now: number) {
+      raf = 0;
+      const dt = Math.min(0.1, (now - lastT) / 1000); // clamp after tab switches
+      lastT = now;
+      step(dt);
+      if (visible) raf = requestAnimationFrame(frame);
+    }
+    function start() {
+      if (raf) return;
+      lastT = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+
+    new ResizeObserver(resize).observe(host);
 
     if (!reduce) {
       host.addEventListener("pointermove", (e) => {
         const b = host.getBoundingClientRect();
         const p = { x: e.clientX - b.left, y: e.clientY - b.top };
-        // fill in the gap on fast movements so the trail doesn't skip
-        if (last) {
-          const dist = Math.hypot(p.x - last.x, p.y - last.y);
+        if (prevPt) { // fill gaps on fast swipes
+          const dist = Math.hypot(p.x - prevPt.x, p.y - prevPt.y);
           const steps = Math.min(12, Math.floor(dist / (RADIUS / 2)));
           for (let s = 1; s <= steps; s++) {
             const t = s / (steps + 1);
-            hit(last.x + (p.x - last.x) * t, last.y + (p.y - last.y) * t);
+            hit(prevPt.x + (p.x - prevPt.x) * t, prevPt.y + (p.y - prevPt.y) * t);
           }
         }
         hit(p.x, p.y);
-        last = p;
-        if (!running) { running = true; requestAnimationFrame(step); }
+        prevPt = p;
       });
-      host.addEventListener("pointerleave", () => { last = null; });
-    }
+      host.addEventListener("pointerleave", () => { prevPt = null; });
 
-    new ResizeObserver(resize).observe(host);
-    // re-read colours when the theme changes (shadcn's .dark class or OS setting)
+      new IntersectionObserver(([e]) => {
+        visible = e.isIntersecting;
+        if (visible) start();
+      }).observe(canvas);
+    }
+    // With reduced motion: the ambient cells are drawn once at random points in their cycle and stay still.
+
     const recolour = () => { readColors(); draw(); };
     new MutationObserver(recolour).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", recolour);
