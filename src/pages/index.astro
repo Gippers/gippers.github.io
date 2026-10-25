@@ -1,54 +1,17 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import CharGrid from '../components/CharGrid.astro';
-import { Button } from "@/components/ui/button";
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import Layout from "@/layouts/main.astro"
+import { Button } from "@/components/ui/button"
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-  </head>
-  <body>
-    <Header />
-
-    <section class="hero">
-      <CharGrid />
-      <div class="hero-content">
-        <h1>Tom Martin</h1>
-        <p>Data science, statistics and the tools I build along the way.</p>
+<Layout>
+  <div class="flex min-h-svh p-6">
+    <div class="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
+      <div>
+        <h1 class="font-medium">Project ready!</h1>
+        <p>You may now add components and start building.</p>
+        <p>We've already added the button component for you.</p>
+        <Button client:load className="mt-2">Button</Button>
       </div>
-    </section>
-
-    <main>
-      <h2>Projects</h2>
-      <p>Coming soon.</p>
-      <Button>Get in Touch</Button>
-    </main>
-
-    <Footer />
-  </body>
-</html>
-
-<style>
-  .hero {
-    position: relative;
-    overflow: hidden;
-    min-height: 60vh;
-    display: grid;
-    place-items: center;
-    border-bottom: 1px solid rgb(var(--gray-light));
-  }
-  .hero-content {
-    position: relative;          /* sits above the canvas */
-    text-align: center;
-    padding: 2rem;
-    background: rgb(var(--gray-gradient, 255 255 255) / 0.85);
-    border: 1px solid rgb(var(--gray-light));
-  }
-  .hero-content h1 { margin: 0 0 0.5rem; }
-  .hero-content p { margin: 0; }
-</style>
+    </div>
+  </div>
+</Layout>
