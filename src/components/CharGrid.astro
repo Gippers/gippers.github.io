@@ -1,7 +1,7 @@
 ---
 // src/components/CharGrid.astro
 interface Props { cell?: number; radius?: number }
-const { cell = 16, radius = 90 } = Astro.props;
+const { cell = 16, radius = 180 } = Astro.props;   // CHANGED: 90 → 180, how far ripples travel
 ---
 <canvas class="char-grid" aria-hidden="true" data-cell={cell} data-radius={radius}></canvas>
 
@@ -15,10 +15,14 @@ const { cell = 16, radius = 90 } = Astro.props;
 </style>
 
 <script>
-  const CHARS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ#%&*+=<>/";
+  const CHARS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ#%&*+=<>/!@^(){}";
 
   // Cursor trail
-  const HIT_CHANCE = 0.02;        // chance a nearby cell lights per pointer sample
+  const HIT_CHANCE = 0.075;        // CHANGED: chance a cell lights as a ripple passes, right at the cursor
+  const FALLOFF = 1.75;              // NEW: how fast that chance drops with distance (higher = tighter)
+  const RIPPLE_SPEED = 400;       // NEW: px per second the ring expands
+  const RIPPLE_SPACING = 24;      // NEW: px of cursor travel between ripples
+  const MAX_RIPPLES = 40;         // NEW: cap on rings in flight
   const FADE_IN = 0.08;           // seconds (time constant) to fade in
   const QUICK_FADE = 1.2;         // seconds for a normal lit cell to fade out
   const LINGER_CHANCE = 0.12;     // chance a lit cell lingers instead
@@ -28,7 +32,7 @@ const { cell = 16, radius = 90 } = Astro.props;
   const LINGER_SCRAMBLE = 0.08;   // flickers per second for lingering cells (calmer)
 
   // Ambient layer (runs without the cursor)
-  const AMBIENT_DENSITY = 0.1;  // fraction of cells mid-fade at any time (sparse)
+  const AMBIENT_DENSITY = 0.1;    // fraction of cells mid-fade at any time
   const AMBIENT_MIN = 40;         // seconds per fade in + out cycle
   const AMBIENT_MAX = 60;
   const AMBIENT_PEAK_MIN = 0.2;   // max opacity an ambient cell reaches
@@ -43,7 +47,7 @@ const { cell = 16, radius = 90 } = Astro.props;
     const ctx = canvas.getContext("2d")!;
     const host = canvas.parentElement!;
     const CELL = Number(canvas.dataset.cell) || 16;
-    const RADIUS = Number(canvas.dataset.radius) || 90;
+    const RADIUS = Number(canvas.dataset.radius) || 180;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let w = 0, h = 0, cols = 0, rows = 0;
@@ -56,7 +60,8 @@ const { cell = 16, radius = 90 } = Astro.props;
     let ambPeak = new Float32Array(0);
     let ambActive = 0;
     let dim = "#888", hot = "#888";
-    let prevPt: { x: number; y: number } | null = null;
+    let ripples: { x: number; y: number; r: number }[] = [];   // NEW
+    let lastRipple: { x: number; y: number } | null = null;    // NEW (replaces prevPt)
 
     function readColors() {
       const s = getComputedStyle(canvas);
@@ -103,6 +108,7 @@ const { cell = 16, radius = 90 } = Astro.props;
       ambDur = new Float32Array(n);
       ambPeak = new Float32Array(n);
       ambActive = 0;
+      ripples = [];
       topUpAmbient(true); // start mid-cycle so the page is never empty
       readColors();
       draw();
@@ -124,6 +130,15 @@ const { cell = 16, radius = 90 } = Astro.props;
     }
 
     function step(dt: number) {
+      // NEW: grow each ripple; cells the ring passes over this frame get their chance to light
+      for (let k = ripples.length - 1; k >= 0; k--) {
+        const rp = ripples[k];
+        const next = Math.min(rp.r + RIPPLE_SPEED * dt, RADIUS);
+        ring(rp.x, rp.y, rp.r, next);
+        rp.r = next;
+        if (rp.r >= RADIUS) ripples.splice(k, 1);
+      }
+
       const kIn = 1 - Math.exp(-dt / FADE_IN);
       for (let i = 0; i < heat.length; i++) {
         if (ambT[i] >= 0) {
@@ -142,21 +157,33 @@ const { cell = 16, radius = 90 } = Astro.props;
       draw();
     }
 
-    function hit(px: number, py: number) {
-      const c0 = Math.max(0, Math.floor((px - RADIUS) / CELL));
-      const c1 = Math.min(cols - 1, Math.floor((px + RADIUS) / CELL));
-      const r0 = Math.max(0, Math.floor((py - RADIUS) / CELL));
-      const r1 = Math.min(rows - 1, Math.floor((py + RADIUS) / CELL));
+    // CHANGED: the old hit() body, now lighting one cell
+    function light(i: number) {
+      if (heat[i] < 0.25) {
+        chars[i] = rand(); // returning to a faded cell gives a new character
+        fadeDur[i] = Math.random() < LINGER_CHANCE ? between(LINGER_MIN, LINGER_MAX) : QUICK_FADE;
+      }
+      heat[i] = 1;
+    }
+
+    // NEW: test only the cells in the band between rIn and rOut from the ripple's centre
+    function ring(px: number, py: number, rIn: number, rOut: number) {
+      const c0 = Math.max(0, Math.floor((px - rOut) / CELL));
+      const c1 = Math.min(cols - 1, Math.floor((px + rOut) / CELL));
+      const r0 = Math.max(0, Math.floor((py - rOut) / CELL));
+      const r1 = Math.min(rows - 1, Math.floor((py + rOut) / CELL));
       for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
         const d = Math.hypot(c * CELL + CELL / 2 - px, r * CELL + CELL / 2 - py);
-        if (d > RADIUS || Math.random() > HIT_CHANCE * (1 - d / RADIUS)) continue;
-        const i = r * cols + c;
-        if (heat[i] < 0.25) {
-          chars[i] = rand(); // returning to a faded cell gives a new character
-          fadeDur[i] = Math.random() < LINGER_CHANCE ? between(LINGER_MIN, LINGER_MAX) : QUICK_FADE;
-        }
-        heat[i] = 1;
+        if (d <= rIn || d > rOut) continue;
+        if (Math.random() > HIT_CHANCE * Math.pow(1 - d / RADIUS, FALLOFF)) continue;
+        light(r * cols + c);
       }
+    }
+
+    // NEW
+    function addRipple(x: number, y: number) {
+      ripples.push({ x, y, r: -1 }); // -1 so the cell under the cursor is included
+      if (ripples.length > MAX_RIPPLES) ripples.shift();
     }
 
     // Animation loop: runs only while the grid is on screen
@@ -177,21 +204,21 @@ const { cell = 16, radius = 90 } = Astro.props;
     new ResizeObserver(resize).observe(host);
 
     if (!reduce) {
+      // CHANGED: drop a ripple every RIPPLE_SPACING px of movement (fills in along fast swipes)
       host.addEventListener("pointermove", (e) => {
         const b = host.getBoundingClientRect();
         const p = { x: e.clientX - b.left, y: e.clientY - b.top };
-        if (prevPt) { // fill gaps on fast swipes
-          const dist = Math.hypot(p.x - prevPt.x, p.y - prevPt.y);
-          const steps = Math.min(12, Math.floor(dist / (RADIUS / 2)));
-          for (let s = 1; s <= steps; s++) {
-            const t = s / (steps + 1);
-            hit(prevPt.x + (p.x - prevPt.x) * t, prevPt.y + (p.y - prevPt.y) * t);
-          }
+        if (!lastRipple) { addRipple(p.x, p.y); lastRipple = p; return; }
+        const dist = Math.hypot(p.x - lastRipple.x, p.y - lastRipple.y);
+        if (dist < RIPPLE_SPACING) return;
+        const n = Math.min(12, Math.floor(dist / RIPPLE_SPACING));
+        for (let s = 1; s <= n; s++) {
+          const t = s / n;
+          addRipple(lastRipple.x + (p.x - lastRipple.x) * t, lastRipple.y + (p.y - lastRipple.y) * t);
         }
-        hit(p.x, p.y);
-        prevPt = p;
+        lastRipple = p;
       });
-      host.addEventListener("pointerleave", () => { prevPt = null; });
+      host.addEventListener("pointerleave", () => { lastRipple = null; });
 
       new IntersectionObserver(([e]) => {
         visible = e.isIntersecting;
