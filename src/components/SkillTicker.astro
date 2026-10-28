@@ -1,0 +1,33 @@
+---
+import { Icon } from "astro-icon/components"
+import { skills } from "@/data"
+---
+<section aria-label="Skills and tools" class="skill-ticker border-b py-4">
+  <div class="fade overflow-hidden">
+    <div class="track flex w-max">
+      {[0, 1].map((copy) => (
+        <ul class="flex shrink-0" aria-hidden={copy === 1 ? "true" : undefined}>
+          {skills.map(({ name, icon: I }) => (
+            <li class="flex items-center gap-2 px-6 font-mono text-xs whitespace-nowrap text-muted-foreground">
+              {typeof I === "string" ? <Icon name={I} class="size-4" /> : <I className="size-4" />}
+              {name}
+            </li>
+          ))}
+        </ul>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* two identical lists; sliding by half the width loops seamlessly */
+  .track { animation: ticker 40s linear infinite; }
+  .skill-ticker:hover .track { animation-play-state: paused; }
+  @keyframes ticker { to { transform: translateX(-50%); } }
+  .fade { mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); }
+  @media (prefers-reduced-motion: reduce) {
+    .track { animation: none; flex-wrap: wrap; width: auto; justify-content: center; }
+    .skill-ticker ul[aria-hidden] { display: none; }
+    .skill-ticker ul { flex-wrap: wrap; justify-content: center; row-gap: 0.75rem; }
+  }
+</style>

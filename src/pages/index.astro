@@ -3,6 +3,7 @@ import Main from "@/layouts/main.astro";
 import CharGrid from "@/components/CharGrid.astro";
 import ProjectCard from "@/components/ProjectCard.astro";
 import EducationCard from "@/components/EducationCard.astro";
+import SkillTicker from "@/components/SkillTicker.astro";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { projects, education, email } from "@/data";
@@ -23,6 +24,7 @@ const featured = projects.find((p) => p.featured)!;
       </div>
     </div>
   </section>
+  <SkillTicker />
 
   <div class="mx-auto max-w-5xl space-y-16 px-4 py-16">
     <section class="grid gap-8 md:grid-cols-[1fr_1.2fr] md:items-center">

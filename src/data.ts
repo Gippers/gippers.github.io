@@ -1,3 +1,5 @@
+import { Activity, Database } from "lucide-react"
+
 // Site content, moved over from the old Quarto site (Gippers/personalWebsite).
 
 export const email = "thomas.martin.stats@gmail.com"
@@ -49,4 +51,17 @@ export const education = [
     dates: "Mar 2015 – Nov 2018",
     detail: "Major in Computer Science, Minor in Mathematics",
   },
+]
+
+// icon: a simple-icons name, or a lucide component for tools simple-icons has no logo for
+export const skills: { name: string; icon: string | typeof Database }[] = [
+  { name: "R", icon: "simple-icons:r" },
+  { name: "Python", icon: "simple-icons:python" },
+  { name: "SQL", icon: Database },
+  { name: "PostgreSQL", icon: "simple-icons:postgresql" },
+  { name: "Git", icon: "simple-icons:git" },
+  { name: "Podman", icon: "simple-icons:podman" },
+  { name: "Quarto", icon: "simple-icons:quarto" },
+  { name: "Pydantic AI", icon: "simple-icons:pydantic" },
+  { name: "Arize Phoenix", icon: Activity },
 ]
