@@ -44,14 +44,12 @@ const featured = projects.find((p) => p.featured)!;
         {education.map((e) => <EducationCard item={e} />)}
       </div>
     </section>
-  </div>
 
-  <SkillTicker />
-
-  <div class="mx-auto max-w-5xl px-4 py-16">
     <section class="space-y-2">
       <h2 class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Get in touch</h2>
       <a href={`mailto:${email}`} class="text-lg underline-offset-4 hover:underline">{email}</a>
     </section>
   </div>
+
+  <SkillTicker />
 </Main>
