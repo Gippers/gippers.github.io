@@ -9,12 +9,18 @@ import { projects, education, email } from "@/data";
 const featured = projects.find((p) => p.featured)!;
 ---
 <Main>
-  <section class="relative grid min-h-[40vh] place-items-center overflow-hidden border-b">
+  <section class="relative overflow-hidden border-b">
     <CharGrid />
-    <div class="relative border bg-background/85 p-8 text-center">
-      <h1 class="text-4xl font-semibold tracking-tight">Tom Martin</h1>
-      <p class="mt-2 font-mono text-xs text-muted-foreground">Statistician · Computer Scientist · Data Analyst</p>
-      <p class="mt-4 max-w-md text-muted-foreground">I build statistical models and BI tools, and apply statistics to help organisations make better decisions.</p>
+    <div class="relative mx-auto max-w-5xl px-4 py-20 sm:py-28">
+      <div class="max-w-xl border bg-background/85 p-8 sm:p-10">
+        <p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Statistician · Computer Scientist · Data Analyst</p>
+        <h1 class="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">Tom Martin</h1>
+        <p class="mt-4 text-lg text-muted-foreground">I build statistical models and BI tools, and apply statistics to help organisations make better decisions.</p>
+        <div class="mt-8 flex flex-wrap gap-2">
+          <a href="/projects/" class={cn(buttonVariants({ size: "lg" }))}>View projects</a>
+          <a href={`mailto:${email}`} class={cn(buttonVariants({ variant: "outline", size: "lg" }))}>Get in touch</a>
+        </div>
+      </div>
     </div>
   </section>
 
