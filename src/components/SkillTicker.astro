@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components"
 import { skills, methods } from "@/data"
 ---
-<section aria-label="Skills and tools" class="skill-ticker space-y-3 border-b py-4">
+<section aria-label="Skills and tools" class="skill-ticker space-y-3 border-y py-4">
   {[skills, methods].map((row, r) => (
     <div class="fade overflow-hidden">
       <div class:list={["track flex w-max", r === 1 && "reverse"]}>
@@ -23,7 +23,7 @@ import { skills, methods } from "@/data"
 
 <style>
   /* four identical lists (one copy is narrower than wide screens); sliding by one copy loops seamlessly */
-  .track { animation: ticker 40s linear infinite; }
+  .track { animation: ticker 60s linear infinite; }
   .track.reverse { animation-direction: reverse; }
   .skill-ticker:hover .track { animation-play-state: paused; }
   @keyframes ticker { to { transform: translateX(-25%); } }
