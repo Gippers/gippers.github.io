@@ -1,55 +1,40 @@
 ---
 import Main from "@/layouts/main.astro";
 import CharGrid from "@/components/CharGrid.astro";
-import ProjectCard from "@/components/ProjectCard.astro";
-import EducationCard from "@/components/EducationCard.astro";
-import SkillTicker from "@/components/SkillTicker.astro";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { projects, education, email } from "@/data";
-const featured = projects.find((p) => p.featured)!;
+import { sections } from "@/data";
 ---
 <Main>
   <section class="relative overflow-hidden border-b">
     <CharGrid />
     <div class="relative mx-auto max-w-5xl px-4 py-20 sm:py-28">
       <div class="max-w-xl border bg-background/85 p-8 sm:p-10">
-        <p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Statistician · Computer Scientist · Data Analyst</p>
-        <h1 class="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">Tom Martin</h1>
-        <p class="mt-4 text-lg text-muted-foreground">I build statistical models and BI tools, and apply statistics to help organisations make better decisions.</p>
+        <p class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Tagline goes here</p>
+        <h1 class="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">Site name</h1>
+        <p class="mt-4 text-lg text-muted-foreground">A sentence or two about what this site is for.</p>
         <div class="mt-8 flex flex-wrap gap-2">
-          <a href="/projects/" class={cn(buttonVariants({ size: "lg" }))}>View projects</a>
-          <a href={`mailto:${email}`} class={cn(buttonVariants({ variant: "outline", size: "lg" }))}>Get in touch</a>
+          <a href="/data-professionals/" class={cn(buttonVariants({ size: "lg" }))}>Data Professionals</a>
+          <a href="/projects/" class={cn(buttonVariants({ variant: "outline", size: "lg" }))}>Projects</a>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="mx-auto max-w-5xl space-y-16 px-4 py-16">
-    <section class="grid gap-8 md:grid-cols-[1fr_1.2fr] md:items-center">
-      <div class="space-y-4">
-        <h2 class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Featured project</h2>
-        <p class="text-muted-foreground">Applied data analysis projects in R and Python. One I'd highlight is the {featured.title}: {featured.description.toLowerCase()}</p>
-        <a href="/projects/" class={cn(buttonVariants({ variant: "outline" }))}>View all projects</a>
-      </div>
-      <ProjectCard project={featured} />
-    </section>
-
-    <section class="space-y-6">
-      <div class="flex items-baseline justify-between">
-        <h2 class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Qualifications</h2>
-        <a href="/about/" class="text-xs text-muted-foreground hover:text-foreground">More about me →</a>
-      </div>
-      <div class="grid gap-4 sm:grid-cols-3">
-        {education.map((e) => <EducationCard item={e} />)}
-      </div>
-    </section>
-
-    <section class="space-y-2">
-      <h2 class="font-mono text-xs uppercase tracking-widest text-muted-foreground">Get in touch</h2>
-      <a href={`mailto:${email}`} class="text-lg underline-offset-4 hover:underline">{email}</a>
-    </section>
-  </div>
-
-  <SkillTicker />
+  <section class="mx-auto max-w-5xl px-4 py-16">
+    <h2 class="mb-6 font-mono text-xs uppercase tracking-widest text-muted-foreground">For data professionals</h2>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {sections.map((s) => (
+        <a href={`/data-professionals/${s.slug}/`} class="group">
+          <Card className="h-full transition-colors group-hover:ring-foreground/30">
+            <CardHeader>
+              <CardTitle className="text-base">{s.title}</CardTitle>
+              <CardDescription>{s.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        </a>
+      ))}
+    </div>
+  </section>
 </Main>

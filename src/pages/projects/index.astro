@@ -3,12 +3,12 @@ import Main from "@/layouts/main.astro";
 import { ArrowUpRight, Search } from "lucide-react";
 import { projects } from "@/data";
 ---
-<Main title="Projects · Tom Martin">
+<Main title="Projects">
   <section class="mx-auto max-w-5xl px-4 py-12">
     <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="text-3xl font-semibold tracking-tight">Projects</h1>
-        <p class="mt-2 text-muted-foreground">Applied data analysis in R and Python. Each project opens on its own site.</p>
+        <p class="mt-2 text-muted-foreground">A short introduction to these projects.</p>
       </div>
       <label class="relative w-full sm:w-64">
         <span class="sr-only">Search projects</span>
@@ -22,8 +22,8 @@ import { projects } from "@/data";
       {projects.map((p) => (
         <li data-search={[p.title, p.description, ...p.tags].join(" ").toLowerCase()}>
           <a href={p.url} target="_blank" rel="noopener noreferrer"
-            class="group grid gap-4 py-6 transition-colors hover:bg-muted/50 sm:grid-cols-[16rem_1fr] sm:gap-6 sm:px-4">
-            <img src={p.image} alt="" loading="lazy" class="aspect-[16/9] w-full border bg-white object-cover" />
+            class:list={["group grid gap-4 py-6 transition-colors hover:bg-muted/50 sm:gap-6 sm:px-4", p.image && "sm:grid-cols-[16rem_1fr]"]}>
+            {p.image && <img src={p.image} alt="" loading="lazy" class="aspect-[16/9] w-full border bg-white object-cover" />}
             <div class="flex flex-col gap-2">
               <div class="flex items-start justify-between gap-2">
                 <h2 class="text-lg font-medium">{p.title}</h2>

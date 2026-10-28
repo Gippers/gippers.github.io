@@ -1,11 +1,12 @@
 ---
 import "@/styles/global.css";
-import { Icon } from "astro-icon/components";           
-import { ModeToggle } from "@/components/ModeToggle";   
+import { ModeToggle } from "@/components/ModeToggle";
+import { sections } from "@/data";
 interface Props { title?: string; description?: string }
-const { title = "Tom Martin", description = "Data science, statistics and the tools I build." } = Astro.props;
+const { title = "Site name", description = "A short description of this site." } = Astro.props;
 const nav = [
   { href: "/", label: "Home" },
+  { href: "/data-professionals/", label: "Data Professionals" },
   { href: "/projects/", label: "Projects" },
   { href: "/about/", label: "About" },
 ];
@@ -26,10 +27,6 @@ const url = new URL(path, Astro.site);
 <meta property="og:url" content={url} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL("/og.png", Astro.site)} />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta name="twitter:card" content="summary_large_image" />
 
 
 <script is:inline>
@@ -54,11 +51,11 @@ const url = new URL(path, Astro.site);
 <body class="flex min-h-screen flex-col">
 <header class="border-b">
 <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-<a href="/" class="hidden font-mono text-sm font-medium sm:block">thomasmartin.id.au</a>
+<a href="/" class="hidden font-mono text-sm font-medium sm:block">Site name</a>
 
 
-<div class="flex items-center gap-6">
-<ul class="flex gap-6 text-sm">
+<div class="flex items-center gap-3 sm:gap-6">
+<ul class="flex gap-3 text-sm whitespace-nowrap sm:gap-6">
 {nav.map((l) => {
 const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
 return (
@@ -73,10 +70,6 @@ return (
 
 
 <div class="flex items-center gap-2">
-<a href="https://github.com/gippers" aria-label="GitHub"
-   class="inline-flex size-9 items-center justify-center border text-muted-foreground hover:bg-muted hover:text-foreground">
-<Icon name="simple-icons:github" class="size-4" />
-</a>
 <ModeToggle client:load />
 </div>
 </div>
@@ -85,7 +78,18 @@ return (
 </header>
 <main class="flex-1"><slot /></main>
 <footer class="border-t">
-<div class="mx-auto max-w-5xl px-4 py-6 text-sm text-muted-foreground">© {new Date().getFullYear()} Tom Martin</div>
+<div class="mx-auto flex max-w-5xl flex-wrap justify-between gap-8 px-4 py-10 text-sm">
+<div class="space-y-3">
+<a href="/data-professionals/" class="block font-medium hover:underline">Data Professionals</a>
+<ul class="space-y-2 text-muted-foreground">
+{sections.map((s) => <li><a href={`/data-professionals/${s.slug}/`} class="hover:text-foreground">{s.title}</a></li>)}
+</ul>
+</div>
+<ul class="space-y-2 text-muted-foreground sm:text-right">
+<li><a href="/projects/" class="hover:text-foreground">Projects</a></li>
+<li><a href="/about/" class="hover:text-foreground">About</a></li>
+</ul>
+</div>
 </footer>
 </body>
 </html>

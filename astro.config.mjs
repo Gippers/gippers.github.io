@@ -8,7 +8,7 @@ import icon from "astro-icon";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://thomasmartin.id.au",
+  site: "https://example.com", // replace with this site's URL
   vite: {
     plugins: [tailwindcss()],
   },

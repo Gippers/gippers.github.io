@@ -1,0 +1,23 @@
+---
+import Main from "@/layouts/main.astro";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { sections } from "@/data";
+---
+<Main title="Data Professionals">
+  <section class="mx-auto max-w-5xl px-4 py-12">
+    <h1 class="text-3xl font-semibold tracking-tight">Data Professionals</h1>
+    <p class="mt-2 mb-8 max-w-2xl text-muted-foreground">An introduction for data professionals. Replace this with your own text.</p>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {sections.map((s) => (
+        <a href={`/data-professionals/${s.slug}/`} class="group">
+          <Card className="h-full transition-colors group-hover:ring-foreground/30">
+            <CardHeader>
+              <CardTitle className="text-base">{s.title}</CardTitle>
+              <CardDescription>{s.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        </a>
+      ))}
+    </div>
+  </section>
+</Main>

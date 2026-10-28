@@ -1,0 +1,14 @@
+---
+import Main from "@/layouts/main.astro";
+import { sections } from "@/data";
+
+export const getStaticPaths = () => sections.map((s) => ({ params: { section: s.slug }, props: s }));
+const { title, description } = Astro.props;
+---
+<Main title={`${title} · Data Professionals`}>
+  <section class="mx-auto max-w-3xl px-4 py-12">
+    <a href="/data-professionals/" class="text-xs text-muted-foreground hover:text-foreground">← Data Professionals</a>
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight">{title}</h1>
+    <p class="mt-2 text-muted-foreground">{description}</p>
+  </section>
+</Main>
