@@ -1,4 +1,4 @@
-import { Activity, Database } from "lucide-react"
+import { Activity, ChartScatter, Database, Hourglass, Map, MessageSquareText, TrendingUp } from "lucide-react"
 
 // Site content, moved over from the old Quarto site (Gippers/personalWebsite).
 
@@ -64,4 +64,12 @@ export const skills: { name: string; icon: string | typeof Database }[] = [
   { name: "Quarto", icon: "simple-icons:quarto" },
   { name: "Pydantic AI", icon: "simple-icons:pydantic" },
   { name: "Arize Phoenix", icon: Activity },
+]
+
+export const methods: typeof skills = [
+  { name: "GLM Regression Modelling", icon: ChartScatter },
+  { name: "Survival Analysis", icon: Hourglass },
+  { name: "Forecasting", icon: TrendingUp },
+  { name: "Geospatial Analysis", icon: Map },
+  { name: "Natural Language Processing", icon: MessageSquareText },
 ]
