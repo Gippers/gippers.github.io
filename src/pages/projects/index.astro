@@ -1,23 +1,14 @@
 ---
 import Main from "@/layouts/main.astro";
-import { getCollection } from "astro:content";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-const projects = (await getCollection("projects")).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+import ProjectCard from "@/components/ProjectCard.astro";
+import { projects } from "@/data";
 ---
 <Main title="Projects · Tom Martin">
   <section class="mx-auto max-w-5xl px-4 py-12">
-    <h1 class="mb-8 text-3xl font-semibold tracking-tight">Projects</h1>
-    <div class="grid gap-px border bg-border sm:grid-cols-2">
-      {projects.map((p) => (
-        <a href={`/projects/${p.id}/`} class="bg-background transition-colors hover:bg-muted">
-          <Card className="border-0 bg-transparent shadow-none">
-            <CardHeader>
-              <CardTitle>{p.data.title}</CardTitle>
-              <CardDescription>{p.data.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        </a>
-      ))}
+    <h1 class="text-3xl font-semibold tracking-tight">Projects</h1>
+    <p class="mt-2 mb-8 text-muted-foreground">Applied data analysis in R and Python. Each project opens on its own site.</p>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((p) => <ProjectCard project={p} />)}
     </div>
   </section>
 </Main>
