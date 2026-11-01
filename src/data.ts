@@ -28,7 +28,7 @@ export const projects = [
     date: new Date("2024-02-01"),
     tags: ["Python", "BI", "Geospatial"],
     image: "/projects/solMap.png",
-    url: "https://solomonislandsdatamap.onrender.com/",
+    url: "https://www.thomasmartin.id.au/SolomonIslandsDataMap/",
     featured: true,
   },
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf())
